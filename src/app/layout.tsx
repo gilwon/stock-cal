@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { DisclaimerFooter } from '@/components/ui/DisclaimerFooter'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { PortfolioProvider } from '@/components/providers/PortfolioProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -32,7 +33,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </nav>
           </div>
         </header>
-        <main className="mx-auto max-w-7xl px-4 pb-20 pt-6">{children}</main>
+        <PortfolioProvider>
+          <main className="mx-auto max-w-7xl px-4 pb-20 pt-6">{children}</main>
+        </PortfolioProvider>
         <DisclaimerFooter />
       </body>
     </html>
