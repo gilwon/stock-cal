@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { AdditionalBuyCalc } from '@/components/calculator/AdditionalBuyCalc'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -19,18 +18,17 @@ export default function CalculatorPage() {
   const [avgPrice, setAvgPrice] = useState('')
   const [currentPrice, setCurrentPrice] = useState('')
   const [currency, setCurrency] = useState<Currency>('KRW')
-  const [submitted, setSubmitted] = useState(false)
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setSubmitted(true)
-  }
+  const qtyNum = parseFloat(qty) || 0
+  const avgPriceNum = parseFloat(avgPrice) || 0
+  const currentPriceNum = parseFloat(currentPrice) || 0
+  const ready = qtyNum > 0 && avgPriceNum > 0 && currentPriceNum > 0
 
   return (
     <div className="max-w-xl space-y-8">
       <h1 className="text-2xl font-bold">추가매수 계산기</h1>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>보유 수량</Label>
@@ -40,7 +38,6 @@ export default function CalculatorPage() {
               value={qty}
               onChange={(e) => setQty(e.target.value)}
               placeholder="100"
-              required
             />
           </div>
           <div className="space-y-2">
@@ -52,7 +49,6 @@ export default function CalculatorPage() {
               value={avgPrice}
               onChange={(e) => setAvgPrice(e.target.value)}
               placeholder="70000"
-              required
             />
           </div>
         </div>
@@ -66,7 +62,6 @@ export default function CalculatorPage() {
               value={currentPrice}
               onChange={(e) => setCurrentPrice(e.target.value)}
               placeholder="67000"
-              required
             />
           </div>
           <div className="space-y-2">
@@ -82,16 +77,17 @@ export default function CalculatorPage() {
             </Select>
           </div>
         </div>
-        <Button type="submit">계산하기</Button>
-      </form>
+      </div>
 
-      {submitted && (
+      {ready ? (
         <AdditionalBuyCalc
-          existingQuantity={parseFloat(qty)}
-          existingAvgPrice={parseFloat(avgPrice)}
-          currentPrice={parseFloat(currentPrice)}
+          existingQuantity={qtyNum}
+          existingAvgPrice={avgPriceNum}
+          currentPrice={currentPriceNum}
           currency={currency}
         />
+      ) : (
+        <p className="text-sm text-muted-foreground">보유 수량, 평균 매수가, 현재가를 입력하면 자동으로 계산됩니다.</p>
       )}
     </div>
   )
