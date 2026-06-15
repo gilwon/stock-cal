@@ -1,15 +1,42 @@
 'use client'
 
 import { useParams } from 'next/navigation'
+import { useState, useEffect, useCallback } from 'react'
 import { HoldingForm } from '@/components/holdings/HoldingForm'
 import { AdditionalBuyCalc } from '@/components/calculator/AdditionalBuyCalc'
+import { SignalPanel } from '@/components/signal/SignalPanel'
 import { usePortfolioStore } from '@/store/portfolio'
-import type { Holding } from '@/types'
+import type { Holding, SignalResult } from '@/types'
 
 export default function EditHoldingPage() {
   const { id } = useParams<{ id: string }>()
   const { holdingsWithPrice, updateHolding } = usePortfolioStore()
   const holding = holdingsWithPrice.find((h) => h.id === id)
+
+  const [signal, setSignal] = useState<SignalResult | null>(null)
+  const [signalLoading, setSignalLoading] = useState(false)
+
+  const fetchSignal = useCallback(
+    async (forceRefresh = false) => {
+      if (!holding) return
+      setSignalLoading(true)
+      try {
+        const url = `/api/stocks/signal?ticker=${encodeURIComponent(holding.ticker)}${forceRefresh ? '&refresh=true' : ''}`
+        const res = await fetch(url)
+        const data = await res.json()
+        setSignal('signal' in data ? data : null)
+      } catch {
+        setSignal(null)
+      } finally {
+        setSignalLoading(false)
+      }
+    },
+    [holding]
+  )
+
+  useEffect(() => {
+    fetchSignal()
+  }, [fetchSignal])
 
   async function handleSave(data: Omit<Holding, 'id' | 'created_at'>) {
     const res = await fetch(`/api/holdings/${id}`, {
@@ -27,6 +54,13 @@ export default function EditHoldingPage() {
 
   return (
     <div className="space-y-10">
+      <SignalPanel
+        ticker={holding.ticker}
+        signal={signal}
+        loading={signalLoading}
+        onRefresh={() => fetchSignal(true)}
+      />
+
       <div>
         <h1 className="text-2xl font-bold mb-6">{holding.name} 수정</h1>
         <HoldingForm
