@@ -58,7 +58,7 @@ export function PortfolioLineChart({ data, loading }: Props) {
           tickFormatter={fmtKRW}
           width={80}
         />
-        <Tooltip formatter={(v: unknown, name: string) => [fmtKRW(v as number), name]} />
+        <Tooltip formatter={(v: unknown, name: unknown) => [fmtKRW(v as number), String(name)]} />
         <Legend />
         <Line
           type="monotone"

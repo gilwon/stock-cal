@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SummaryCards } from '@/components/dashboard/SummaryCards'
 import { HoldingsTable } from '@/components/dashboard/HoldingsTable'
@@ -9,7 +9,7 @@ import { PnlBarChart } from '@/components/charts/PnlBarChart'
 import { RankBarChart } from '@/components/charts/RankBarChart'
 import { PortfolioLineChart } from '@/components/charts/PortfolioLineChart'
 import { usePortfolioStore, usePortfolioSummary } from '@/store/portfolio'
-import type { QuoteMap, SignalResult } from '@/types'
+import type { QuoteMap, SignalResult, HistoryPoint } from '@/types'
 
 export default function DashboardPage() {
   const {
@@ -25,6 +25,8 @@ export default function DashboardPage() {
   } = usePortfolioStore()
 
   const summary = usePortfolioSummary()
+  const [history, setHistory] = useState<HistoryPoint[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
 
   useEffect(() => {
     if (holdings.length === 0) return
@@ -53,6 +55,16 @@ export default function DashboardPage() {
       setSignals(map)
     })
   }, [holdings, setSignals])
+
+  useEffect(() => {
+    if (!activePortfolioId) return
+    setHistoryLoading(true)
+    fetch(`/api/portfolio/history?portfolioId=${activePortfolioId}`)
+      .then((r) => r.json())
+      .then((data) => setHistory(Array.isArray(data) ? data : []))
+      .catch(() => setHistory([]))
+      .finally(() => setHistoryLoading(false))
+  }, [activePortfolioId])
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -93,7 +105,7 @@ export default function DashboardPage() {
           <RankBarChart holdings={holdingsWithPrice} />
         </TabsContent>
         <TabsContent value="line" className="rounded-lg border p-4 mt-2">
-          <PortfolioLineChart summary={summary} />
+          <PortfolioLineChart data={history} loading={historyLoading} />
         </TabsContent>
       </Tabs>
     </div>
