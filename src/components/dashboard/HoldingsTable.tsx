@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button, buttonVariants } from '@/components/ui/button'
+import { SignalBadge } from '@/components/signal/SignalBadge'
 import { cn } from '@/lib/utils'
 import {
   Table,
@@ -12,10 +13,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import type { HoldingWithPrice } from '@/types'
+import type { HoldingWithPrice, SignalResult } from '@/types'
 
 interface Props {
   holdings: HoldingWithPrice[]
+  signals: Record<string, SignalResult | null>
   onDelete: (id: string) => void
 }
 
@@ -34,7 +36,7 @@ function fmtPrice(n: number | null, currency: string) {
   }).format(n)
 }
 
-export function HoldingsTable({ holdings, onDelete }: Props) {
+export function HoldingsTable({ holdings, signals, onDelete }: Props) {
   if (holdings.length === 0) {
     return (
       <div className="rounded-lg border p-8 text-center text-muted-foreground">
@@ -58,59 +60,73 @@ export function HoldingsTable({ holdings, onDelete }: Props) {
             <TableHead className="text-right">평가금액</TableHead>
             <TableHead className="text-right">손익</TableHead>
             <TableHead className="text-right">수익률</TableHead>
+            <TableHead className="text-center">신호</TableHead>
             <TableHead />
           </TableRow>
         </TableHeader>
         <TableBody>
-          {holdings.map((h) => (
-            <TableRow key={h.id}>
-              <TableCell>
-                <div className="font-medium">{h.name}</div>
-                <div className="text-xs text-muted-foreground">
-                  {h.ticker}{' '}
-                  <Badge variant="outline" className="text-[10px]">
-                    {h.market}
-                  </Badge>
-                </div>
-              </TableCell>
-              <TableCell className="text-right">{h.quantity.toLocaleString()}</TableCell>
-              <TableCell className="text-right">{fmtPrice(h.avg_price, h.currency)}</TableCell>
-              <TableCell className="text-right">
-                {h.currentPrice === null ? (
-                  <span className="text-muted-foreground text-xs">조회 중</span>
-                ) : (
-                  fmtPrice(h.currentPrice, h.currency)
-                )}
-              </TableCell>
-              <TableCell className="text-right">{fmtPrice(h.marketValue, h.currency)}</TableCell>
-              <TableCell className={`text-right ${pnlClass(h.pnl)}`}>
-                {h.pnl >= 0 ? '+' : ''}
-                {fmtPrice(h.pnl, h.currency)}
-              </TableCell>
-              <TableCell className={`text-right ${pnlClass(h.pnlPct)}`}>
-                {h.pnlPct >= 0 ? '+' : ''}
-                {h.pnlPct.toFixed(2)}%
-              </TableCell>
-              <TableCell>
-                <div className="flex gap-1">
-                  <Link
-                    href={`/holdings/${h.id}`}
-                    className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }))}
-                  >
-                    수정
-                  </Link>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive"
-                    onClick={() => onDelete(h.id)}
-                  >
-                    삭제
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+          {holdings.map((h) => {
+            const sig = signals[h.ticker]
+            const sigLoading = !(h.ticker in signals)
+            return (
+              <TableRow key={h.id}>
+                <TableCell>
+                  <div className="font-medium">{h.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {h.ticker}{' '}
+                    <Badge variant="outline" className="text-[10px]">
+                      {h.market}
+                    </Badge>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">{h.quantity.toLocaleString()}</TableCell>
+                <TableCell className="text-right">{fmtPrice(h.avg_price, h.currency)}</TableCell>
+                <TableCell className="text-right">
+                  {h.currentPrice === null ? (
+                    <span className="text-muted-foreground text-xs">조회 중</span>
+                  ) : (
+                    fmtPrice(h.currentPrice, h.currency)
+                  )}
+                </TableCell>
+                <TableCell className="text-right">{fmtPrice(h.marketValue, h.currency)}</TableCell>
+                <TableCell className={`text-right ${pnlClass(h.pnl)}`}>
+                  {h.pnl >= 0 ? '+' : ''}
+                  {fmtPrice(h.pnl, h.currency)}
+                </TableCell>
+                <TableCell className={`text-right ${pnlClass(h.pnlPct)}`}>
+                  {h.pnlPct >= 0 ? '+' : ''}
+                  {h.pnlPct.toFixed(2)}%
+                </TableCell>
+                <TableCell className="text-center">
+                  {sigLoading ? (
+                    <span className="text-muted-foreground text-xs">분석 중</span>
+                  ) : sig ? (
+                    <SignalBadge signal={sig.signal} />
+                  ) : (
+                    <span className="text-muted-foreground text-xs">—</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className="flex gap-1">
+                    <Link
+                      href={`/holdings/${h.id}`}
+                      className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }))}
+                    >
+                      수정
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive"
+                      onClick={() => onDelete(h.id)}
+                    >
+                      삭제
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )
+          })}
         </TableBody>
       </Table>
     </div>
