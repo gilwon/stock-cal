@@ -1,13 +1,10 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
 import Link from 'next/link'
 import { DisclaimerFooter } from '@/components/ui/DisclaimerFooter'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { PortfolioProvider } from '@/components/providers/PortfolioProvider'
-
-const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Stock Cal — 주식 포트폴리오 계산기',
@@ -17,7 +14,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ko">
-      <body className={`${inter.className} min-h-screen bg-background`}>
+      <body className="min-h-screen bg-background" style={{ fontFamily: "'Paperozi', sans-serif" }}>
         <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
           <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
             <Link href="/" className="text-lg font-bold tracking-tight">
