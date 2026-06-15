@@ -84,3 +84,9 @@ export interface SignalResult {
   indicators: SignalIndicators
   updatedAt: string
 }
+
+export interface HistoryPoint {
+  date: string        // 'YYYY-MM-DD'
+  marketValue: number
+  costBasis: number
+}
