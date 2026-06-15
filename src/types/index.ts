@@ -67,3 +67,20 @@ export interface PortfolioSummary {
   totalPnl: number
   totalPnlPct: number
 }
+
+export interface SignalIndicators {
+  rsi: { value: number | null; score: number }
+  ma: { ma20: number | null; ma50: number | null; ma200: number | null; score: number }
+  week52: { high: number | null; low: number | null; score: number }
+  targetPrice: { mean: number | null; upside: number | null; score: number }
+  consensus: { buy: number; hold: number; sell: number; score: number }
+  per: { value: number | null; score: number }
+}
+
+export interface SignalResult {
+  ticker: string
+  signal: 'buy' | 'hold' | 'sell'
+  score: number
+  indicators: SignalIndicators
+  updatedAt: string
+}
