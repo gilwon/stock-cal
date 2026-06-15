@@ -88,59 +88,63 @@ export function HoldingForm({ portfolioId, initial, onSave }: Props) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 max-w-lg">
-      <div className="space-y-2">
-        <Label>시장</Label>
-        <Select value={market} onValueChange={(v) => setMarket(v as Market)}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="KR">한국 (KOSPI/KOSDAQ)</SelectItem>
-            <SelectItem value="US">미국 (NYSE/NASDAQ)</SelectItem>
-          </SelectContent>
-        </Select>
+    <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Row 1: 시장 + 종목 검색 */}
+      <div className="flex gap-3">
+        <div className="space-y-2 w-44 shrink-0">
+          <Label>시장</Label>
+          <Select value={market} onValueChange={(v) => setMarket(v as Market)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="KR">🇰🇷 KOSPI / KOSDAQ</SelectItem>
+              <SelectItem value="US">🇺🇸 NYSE / NASDAQ</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="relative flex-1 space-y-2">
+          <Label>종목 검색 <span className="text-muted-foreground font-normal text-xs">(티커 또는 종목명)</span></Label>
+          <Input
+            value={ticker}
+            onChange={(e) => {
+              setTicker(e.target.value)
+              setName('')
+            }}
+            placeholder={market === 'KR' ? '삼성전자, 005930, LG화학…' : 'AAPL, Apple, TSLA…'}
+            required
+          />
+          {searching && (
+            <p className="text-xs text-muted-foreground">검색 중...</p>
+          )}
+          {searchOpen && !searching && searchResults.length === 0 && ticker && !name && (
+            <p className="text-xs text-muted-foreground">결과 없음 — 티커 코드(예: 005930) 또는 영문명으로 검색하세요.</p>
+          )}
+          {searchOpen && searchResults.length > 0 && (
+            <ul className="absolute z-10 w-full rounded-md border bg-background shadow-lg">
+              {searchResults.map((r) => (
+                <li
+                  key={r.ticker}
+                  onClick={() => selectResult(r)}
+                  className="cursor-pointer px-4 py-2.5 hover:bg-muted text-sm flex items-center justify-between"
+                >
+                  <span className="font-medium">{r.name}</span>
+                  <span className="text-muted-foreground text-xs ml-3">{r.ticker}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {name && (
+            <p className="text-sm font-medium text-foreground">
+              ✓ {name} <span className="text-muted-foreground font-normal text-xs">({ticker})</span>
+            </p>
+          )}
+        </div>
       </div>
 
-      <div className="relative space-y-2">
-        <Label>종목 검색 (티커 또는 종목명)</Label>
-        <Input
-          value={ticker}
-          onChange={(e) => {
-            setTicker(e.target.value)
-            setName('')
-          }}
-          placeholder={market === 'KR' ? '예: 삼성전자 또는 005930' : '예: AAPL 또는 Apple'}
-          required
-        />
-        {searching && (
-          <p className="text-xs text-muted-foreground">검색 중...</p>
-        )}
-        {searchOpen && !searching && searchResults.length === 0 && ticker && !name && (
-          <p className="text-xs text-muted-foreground">결과 없음 — 티커 코드(예: 005930) 또는 영문 종목명으로 검색하세요.</p>
-        )}
-        {searchOpen && searchResults.length > 0 && (
-          <ul className="absolute z-10 w-full rounded-md border bg-background shadow-lg">
-            {searchResults.map((r) => (
-              <li
-                key={r.ticker}
-                onClick={() => selectResult(r)}
-                className="cursor-pointer px-4 py-2 hover:bg-muted text-sm"
-              >
-                <span className="font-medium">{r.name}</span>
-                <span className="ml-2 text-muted-foreground text-xs">{r.ticker}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {name && (
-          <p className="text-sm text-muted-foreground">
-            선택됨: {name} ({ticker})
-          </p>
-        )}
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
+      {/* Row 2: 수량 + 평균 매수가 + 통화 */}
+      <div className="grid grid-cols-3 gap-3">
         <div className="space-y-2">
           <Label>보유 수량</Label>
           <Input
@@ -161,26 +165,40 @@ export function HoldingForm({ portfolioId, initial, onSave }: Props) {
             step="any"
             value={avgPrice}
             onChange={(e) => setAvgPrice(e.target.value)}
-            placeholder="70000"
+            placeholder={market === 'KR' ? '70000' : '150.00'}
             required
           />
         </div>
+        <div className="space-y-2">
+          <Label>통화</Label>
+          <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="KRW">KRW — 원화</SelectItem>
+              <SelectItem value="USD">USD — 달러</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label>통화</Label>
-        <Select value={currency} onValueChange={(v) => setCurrency(v as Currency)}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="KRW">KRW (원)</SelectItem>
-            <SelectItem value="USD">USD (달러)</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      {/* 총 매입금액 미리보기 */}
+      {parseFloat(quantity) > 0 && parseFloat(avgPrice) > 0 && (
+        <p className="text-sm text-muted-foreground">
+          총 매입금액:{' '}
+          <span className="font-semibold text-foreground">
+            {new Intl.NumberFormat('ko-KR', {
+              style: 'currency',
+              currency,
+              maximumFractionDigits: 0,
+            }).format(parseFloat(quantity) * parseFloat(avgPrice))}
+          </span>
+        </p>
+      )}
 
-      <div className="flex gap-3">
+      {/* Buttons */}
+      <div className="flex gap-2 pt-1">
         <Button type="submit" disabled={loading}>
           {loading ? '저장 중...' : '저장'}
         </Button>

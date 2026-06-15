@@ -25,11 +25,13 @@ export default function CalculatorPage() {
   const ready = qtyNum > 0 && avgPriceNum > 0 && currentPriceNum > 0
 
   return (
-    <div className="max-w-xl space-y-8">
+    <div className="space-y-8">
       <h1 className="text-2xl font-bold">추가매수 계산기</h1>
 
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+      {/* 기존 보유 현황 — 4열 입력 */}
+      <div className="rounded-xl border bg-card p-5 space-y-4">
+        <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">기존 보유 현황 입력</p>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <div className="space-y-2">
             <Label>보유 수량</Label>
             <Input
@@ -38,6 +40,7 @@ export default function CalculatorPage() {
               value={qty}
               onChange={(e) => setQty(e.target.value)}
               placeholder="100"
+              autoFocus
             />
           </div>
           <div className="space-y-2">
@@ -51,8 +54,6 @@ export default function CalculatorPage() {
               placeholder="70000"
             />
           </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label>현재가</Label>
             <Input
@@ -71,14 +72,15 @@ export default function CalculatorPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="KRW">KRW</SelectItem>
-                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="KRW">KRW — 원화</SelectItem>
+                <SelectItem value="USD">USD — 달러</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
       </div>
 
+      {/* 추가매수 시뮬레이션 */}
       {ready ? (
         <AdditionalBuyCalc
           existingQuantity={qtyNum}
@@ -87,7 +89,9 @@ export default function CalculatorPage() {
           currency={currency}
         />
       ) : (
-        <p className="text-sm text-muted-foreground">보유 수량, 평균 매수가, 현재가를 입력하면 자동으로 계산됩니다.</p>
+        <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+          보유 수량, 평균 매수가, 현재가를 모두 입력하면<br />추가매수 시뮬레이션이 표시됩니다.
+        </div>
       )}
     </div>
   )
