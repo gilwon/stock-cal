@@ -30,18 +30,22 @@ export function HoldingForm({ portfolioId, initial, onSave }: Props) {
   const [currency, setCurrency] = useState<Currency>(initial?.currency ?? 'KRW')
   const [searchResults, setSearchResults] = useState<TickerSearchResult[]>([])
   const [searchOpen, setSearchOpen] = useState(false)
+  const [searching, setSearching] = useState(false)
   const [loading, setLoading] = useState(false)
 
   const handleSearch = useCallback(
     async (q: string) => {
       if (q.length < 1) {
         setSearchResults([])
+        setSearchOpen(false)
         return
       }
+      setSearching(true)
       const res = await fetch(`/api/stocks/search?q=${encodeURIComponent(q)}&market=${market}`)
       const data = await res.json()
       setSearchResults(data)
       setSearchOpen(true)
+      setSearching(false)
     },
     [market]
   )
@@ -65,6 +69,10 @@ export function HoldingForm({ portfolioId, initial, onSave }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!name) {
+      alert('종목을 검색 결과에서 선택해주세요.')
+      return
+    }
     setLoading(true)
     await onSave({
       portfolio_id: portfolioId,
@@ -102,9 +110,15 @@ export function HoldingForm({ portfolioId, initial, onSave }: Props) {
             setTicker(e.target.value)
             setName('')
           }}
-          placeholder={market === 'KR' ? '예: 005930 또는 삼성전자' : '예: AAPL 또는 Apple'}
+          placeholder={market === 'KR' ? '예: 삼성전자 또는 005930' : '예: AAPL 또는 Apple'}
           required
         />
+        {searching && (
+          <p className="text-xs text-muted-foreground">검색 중...</p>
+        )}
+        {searchOpen && !searching && searchResults.length === 0 && ticker && !name && (
+          <p className="text-xs text-muted-foreground">결과 없음 — 티커 코드(예: 005930) 또는 영문 종목명으로 검색하세요.</p>
+        )}
         {searchOpen && searchResults.length > 0 && (
           <ul className="absolute z-10 w-full rounded-md border bg-background shadow-lg">
             {searchResults.map((r) => (
