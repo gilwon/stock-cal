@@ -1,6 +1,7 @@
 import { create } from 'zustand'
+import { useShallow } from 'zustand/react/shallow'
 import { persist } from 'zustand/middleware'
-import type { Portfolio, Holding, HoldingWithPrice, QuoteMap } from '@/types'
+import type { Portfolio, Holding, HoldingWithPrice, QuoteMap, SignalResult } from '@/types'
 import { calcHoldingWithPrice, calcPortfolioSummary } from '@/lib/calculations'
 
 interface PortfolioStore {
@@ -11,11 +12,14 @@ interface PortfolioStore {
   holdingsWithPrice: HoldingWithPrice[]
   isLoadingPrices: boolean
 
+  signals: Record<string, SignalResult | null>
+
   setPortfolios: (portfolios: Portfolio[]) => void
   setActivePortfolioId: (id: string | null) => void
   setHoldings: (holdings: Holding[]) => void
   setQuotes: (quotes: QuoteMap) => void
   setLoadingPrices: (v: boolean) => void
+  setSignals: (signals: Record<string, SignalResult | null>) => void
   addHolding: (holding: Holding) => void
   updateHolding: (holding: Holding) => void
   removeHolding: (id: string) => void
@@ -34,6 +38,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
       quotes: {},
       holdingsWithPrice: [],
       isLoadingPrices: false,
+      signals: {},
 
       setPortfolios: (portfolios) => set({ portfolios }),
       setActivePortfolioId: (id) => set({ activePortfolioId: id }),
@@ -45,6 +50,7 @@ export const usePortfolioStore = create<PortfolioStore>()(
         set({ quotes, holdingsWithPrice: mergeWithPrices(get().holdings, quotes) }),
 
       setLoadingPrices: (v) => set({ isLoadingPrices: v }),
+      setSignals: (signals) => set({ signals }),
 
       addHolding: (holding) => {
         const holdings = [...get().holdings, holding]
@@ -71,5 +77,5 @@ export const usePortfolioStore = create<PortfolioStore>()(
 )
 
 export function usePortfolioSummary() {
-  return usePortfolioStore((s) => calcPortfolioSummary(s.holdingsWithPrice))
+  return usePortfolioStore(useShallow((s) => calcPortfolioSummary(s.holdingsWithPrice)))
 }
