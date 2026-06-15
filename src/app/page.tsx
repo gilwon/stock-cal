@@ -9,13 +9,15 @@ import { PnlBarChart } from '@/components/charts/PnlBarChart'
 import { RankBarChart } from '@/components/charts/RankBarChart'
 import { PortfolioLineChart } from '@/components/charts/PortfolioLineChart'
 import { usePortfolioStore, usePortfolioSummary } from '@/store/portfolio'
-import type { QuoteMap } from '@/types'
+import type { QuoteMap, SignalResult } from '@/types'
 
 export default function DashboardPage() {
   const {
     holdingsWithPrice,
     holdings,
     setQuotes,
+    setSignals,
+    signals,
     portfolios,
     activePortfolioId,
     removeHolding,
@@ -24,7 +26,6 @@ export default function DashboardPage() {
 
   const summary = usePortfolioSummary()
 
-  // Fetch prices when holdings change
   useEffect(() => {
     if (holdings.length === 0) return
     const tickers = [...new Set(holdings.map((h) => h.ticker))].join(',')
@@ -34,6 +35,24 @@ export default function DashboardPage() {
       .then((data: QuoteMap) => setQuotes(data))
       .finally(() => setLoadingPrices(false))
   }, [holdings, setQuotes, setLoadingPrices])
+
+  useEffect(() => {
+    if (holdings.length === 0) return
+    const tickers = [...new Set(holdings.map((h) => h.ticker))]
+    Promise.all(
+      tickers.map((ticker) =>
+        fetch(`/api/stocks/signal?ticker=${encodeURIComponent(ticker)}`)
+          .then((r) => r.json())
+          .catch(() => null)
+      )
+    ).then((results) => {
+      const map: Record<string, SignalResult | null> = {}
+      tickers.forEach((ticker, i) => {
+        map[ticker] = results[i] && 'signal' in results[i] ? results[i] : null
+      })
+      setSignals(map)
+    })
+  }, [holdings, setSignals])
 
   const handleDelete = useCallback(
     async (id: string) => {
@@ -51,7 +70,11 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <SummaryCards summary={summary} baseCurrency={baseCurrency} />
 
-      <HoldingsTable holdings={holdingsWithPrice} onDelete={handleDelete} />
+      <HoldingsTable
+        holdings={holdingsWithPrice}
+        signals={signals}
+        onDelete={handleDelete}
+      />
 
       <Tabs defaultValue="pie">
         <TabsList className="grid w-full grid-cols-4">
